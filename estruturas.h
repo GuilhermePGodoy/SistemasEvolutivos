@@ -8,6 +8,12 @@ constexpr int TAM_POP = 100;
 constexpr int N_AULAS = 20;
 constexpr int MAX_GEN = 1000;
 
+constexpr int N_SALAS = 10;
+constexpr int N_HORARIOS = 10;
+constexpr int N_PROFESSORES = 10;
+constexpr int N_TURMAS = 10;
+constexpr int N_DISCIPLINAS = 10;
+
 constexpr double TAXA_MUTACAO = 0.01;
 
 struct Sala{
@@ -26,20 +32,20 @@ struct Professor{
     std::string nome;
 };
 
-struct Disciplina{
-    int id;
-    std::shared_ptr<Professor> professor;
-};
-
 struct Turma{
     int id;
     std::string nome;
 };
 
+struct Disciplina{
+    int id;
+    std::shared_ptr<Professor> professor;
+    std::shared_ptr<Turma> turma;
+};
+
 struct Aula{
     std::shared_ptr<Horario> horario;
     std::shared_ptr<Sala> sala;
-    std::shared_ptr<Turma> turma;
     std::shared_ptr<Disciplina> disciplina;
 };
 
@@ -49,13 +55,13 @@ private:
     double fitness;
 
 public:
-    // Cria vetor de aulas com as disciplinas e turmas na ordem em que
-    // foram passadas nos vectors, com valores aleatórios nos outros campos.
-    Cronograma(const std::vector<std::string>& disciplinas, const std::vector<std::string>& turmas);
+    // Cria vetor de aulas com as disciplinas na ordem em que
+    // foram passadas no vector, com valores aleatórios nos outros campos.
+    Cronograma(const std::vector<std::shared_ptr<Disciplina>>& disciplinas);
     // Calcula o valor da função de fitness para o indivíduo e o guarda.
     void calcular_fitness();
     // Retorna o valor salvo do fitness do indivíduo.
-    double fitness();
+    double get_fitness();
 };
 
 class Populacao{
@@ -70,7 +76,7 @@ public:
     // Calcula o fitness de todos os indivíduos.
     void calcular_fitness_populacao();
     // Retorna o índice do melhor indivíduo.
-    int melhor();
+    int get_melhor();
     // Inicia o algoritmo evolutivo sobre a população.
     void evoluir_populacao();
 };
