@@ -25,7 +25,12 @@ int aleatorio(int max) {
 
 // Função de fitness usada para avaliar os indivíduos.
 double funcao_fitness(int conflitos){
-    return 1/(conflitos+1);
+    return 1.0/(conflitos+1);
+}
+
+// Construtor padrão.
+Cronograma::Cronograma(){
+    fitness = 0.0;
 }
 
 // Cria vetor de aulas com as disciplinas na ordem em que
@@ -43,6 +48,12 @@ Cronograma::Cronograma(const vector<shared_ptr<Disciplina>>& disciplinas){
         aulas.push_back(aula);
     }
 }
+
+// Adiciona uma aula ao cronograma.
+void Cronograma::adicionar_aula(Aula aula){
+    aulas.push_back(aula);
+}
+
 // Calcula o valor da função de fitness para o indivíduo e o guarda.
 // RESTRIÇÕES:
 // Um professor não pode dar duas aulas ao mesmo tempo.
@@ -66,8 +77,13 @@ void Cronograma::calcular_fitness(){
 }
 
 // Retorna o valor salvo do fitness do indivíduo.
-double Cronograma::get_fitness(){
+double Cronograma::get_fitness() const {
     return fitness;
+}
+
+// Retorna a aula i do cronograma.
+Aula Cronograma::get_aula(size_t i) const {
+    return aulas[i];
 }
 
 // Gera a população inicial aleatoriamente.
@@ -94,13 +110,86 @@ void Populacao::calcular_fitness_populacao(){
     }
 }
 
+// Retorna o indivíduo i.
+Cronograma Populacao::get_individuo(size_t i) const {
+    return individuos[i];
+}
+
 // Retorna o índice do melhor indivíduo.
-int Populacao::get_melhor(){
+int Populacao::get_melhor() const {
     return melhor;
 }
+
+// Implementa Torneio para escolher os pais.
+size_t Torneio(int grau, const Populacao& pop){
+    size_t ind, melhor;
+    melhor = (size_t) aleatorio(TAM_POP);
+    for(int i = 1; i < grau; i++){
+        ind = (size_t) aleatorio(TAM_POP);
+        melhor = (pop.get_individuo(ind).get_fitness() > pop.get_individuo(melhor).get_fitness()) ? ind : melhor;
+    }
+
+    return melhor;
+}
+
+// Gera um filho por meio de uniform crossover.
+// Para cada gene (aula), um número aleatório é gerado.
+// Se 1, o filho herda o gene do pai1.
+// Se 0, herda do pai2.
+Cronograma uniform_crossover(const Cronograma& pai1, const Cronograma& pai2){
+    Cronograma filho;
+
+    for(int i = 0; i < N_AULAS; i++){
+        if(aleatorio(2))
+            filho.adicionar_aula(pai1.get_aula(i)); // Se 1, gene i vem do pai1.
+        else
+            filho.adicionar_aula(pai2.get_aula(i)); // Senão, vem do pai2.
+    }
+
+    return filho;
+}
+
 // Inicia o algoritmo evolutivo sobre a população.
+// Usa Torneio para escolher os pais.
 void Populacao::evoluir_populacao(){
- return;
+
+    Cronograma filho;
+    size_t i;
+    size_t indice_pai1, indice_pai2;
+    int grau = 2; // Número de indivíduos por torneio.
+
+    calcular_fitness_populacao();
+
+    for(int gen = 0; gen < MAX_GEN; gen++){
+     
+        vector<Cronograma> individuos_novos;
+
+        // Adiciona o melhor indivíduo à nova população.
+        Cronograma melhor_individuo = individuos[melhor];
+        individuos_novos.push_back(melhor_individuo);
+
+        // Gera os indivíduos restantes (o melhor já está na população).
+        for(i = 0; i < TAM_POP - 1; i++){
+            indice_pai1 = Torneio(grau, *this);
+            indice_pai2 = Torneio(grau, *this);
+
+            const Cronograma& pai1 = individuos[indice_pai1];
+            const Cronograma& pai2 = individuos[indice_pai2];
+
+            filho = uniform_crossover(pai1, pai2);
+
+            // IMPLEMENTAR MUTAÇÃO AQUI
+
+            individuos_novos.push_back(filho);
+        }
+
+        individuos = individuos_novos;
+
+        calcular_fitness_populacao();
+
+        if(fitness_melhor == 1.0) // Um cronograma válido foi gerado.
+            break;
+    }
 }
 
 int main(void){

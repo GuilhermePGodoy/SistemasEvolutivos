@@ -55,13 +55,19 @@ private:
     double fitness;
 
 public:
+    // Construtor padrão.
+    Cronograma();
     // Cria vetor de aulas com as disciplinas na ordem em que
     // foram passadas no vector, com valores aleatórios nos outros campos.
     Cronograma(const std::vector<std::shared_ptr<Disciplina>>& disciplinas);
+    // Adiciona uma aula ao cronograma.
+    void adicionar_aula(Aula aula);
     // Calcula o valor da função de fitness para o indivíduo e o guarda.
     void calcular_fitness();
+    // Retorna a aula i do cronograma.
+    Aula get_aula(size_t i) const;
     // Retorna o valor salvo do fitness do indivíduo.
-    double get_fitness();
+    double get_fitness() const;
 };
 
 class Populacao{
@@ -75,8 +81,10 @@ public:
     Populacao();
     // Calcula o fitness de todos os indivíduos.
     void calcular_fitness_populacao();
+    // Retorna o indivíduo i.
+    Cronograma get_individuo(size_t i) const;
     // Retorna o índice do melhor indivíduo.
-    int get_melhor();
+    int get_melhor() const;
     // Inicia o algoritmo evolutivo sobre a população.
     void evoluir_populacao();
 };
