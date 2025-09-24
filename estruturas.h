@@ -5,14 +5,14 @@
 #include <memory>
 
 constexpr int TAM_POP = 100;
-constexpr int N_AULAS = 30;
+constexpr int N_AULAS = 64;
 constexpr int MAX_GEN = 1000;
 
-constexpr int N_SALAS = 10;
-constexpr int N_HORARIOS = 10;
+constexpr int N_SALAS = 8;
+constexpr int N_HORARIOS = 16;
 constexpr int N_PROFESSORES = 20;
-constexpr int N_TURMAS = 15;
-constexpr int N_DISCIPLINAS = 30;
+constexpr int N_TURMAS = 30;
+constexpr int N_DISCIPLINAS = 64;
 
 constexpr double TAXA_MUTACAO = 0.01;
 
@@ -69,6 +69,8 @@ public:
     void set_observacao(size_t i, std::string obs);
     // Retorna a aula i do cronograma.
     Aula get_aula(size_t i) const;
+    // Inclui nova_aula na posição i do cronograma;
+    void set_aula(size_t i, Aula nova_aula);
     // Retorna o valor salvo do fitness do indivíduo.
     double get_fitness() const;
     // Imprime o cronograma.
@@ -80,6 +82,8 @@ private:
     std::vector<Cronograma> individuos;
     int melhor;
     double fitness_melhor;
+    int pior;
+    double fitness_pior;
     int gen;
 
 public:

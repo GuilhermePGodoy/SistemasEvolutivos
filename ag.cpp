@@ -14,6 +14,9 @@ vector<shared_ptr<Professor>> professores;
 vector<shared_ptr<Turma>> turmas;
 vector<shared_ptr<Disciplina>> disciplinas;
 
+vector<string> dias = {"segunda-feira ", "terça-feira ", "quarta-feira ", "quinta-feira ", "sexta-feira "};
+vector<string> horarios_possiveis = {"08:10", "10:10", "14:20", "16:20"};
+
 // Cria dados de teste.
 void inicializar_dados_de_teste() {
     std::cout << "Inicializando dados de teste..." << std::endl;
@@ -35,9 +38,13 @@ void inicializar_dados_de_teste() {
     }
 
     // --- Cria Horarios ---
-    for (int i = 0; i < N_HORARIOS; ++i) {
-        std::string descricao_horario = "Horario " + std::to_string(i + 1);
-        horarios.push_back(std::make_shared<Horario>(Horario{i, descricao_horario}));
+    int id = 0;
+    for (auto dia : dias)
+        for (auto horario : horarios_possiveis) {
+            cout << "id horario " << id << endl;
+            std::string descricao_horario = dia + horario;
+            horarios.push_back(std::make_shared<Horario>(Horario{id, descricao_horario}));
+            id++;
     }
 
     // --- Cria Professores ---
@@ -74,6 +81,18 @@ int aleatorio(int max) {
     uniform_int_distribution<int> distribuicao(0, max-1);
 
     return distribuicao(motor);
+}
+
+size_t gerar_bitmask(int tam){
+    size_t bitmask = 0;
+    for(int i = 0; i < tam; i++)
+        bitmask = (bitmask << 1) | aleatorio(2);
+
+    return bitmask;
+}
+
+bool realizar_mutacao(void){
+    return aleatorio(100) <= TAXA_MUTACAO*100;
 }
 
 // Função de fitness usada para avaliar os indivíduos.
@@ -120,25 +139,30 @@ void Cronograma::adicionar_aula(Aula aula){
 void Cronograma::calcular_fitness(){
     cout << "----------------------------------" << endl;
     cout << "Calculando fitness de um indivíduo." << endl;
-    int conflitos = 0;
+    int conflitos = 0, tem_conflito = 0;
     for(size_t i = 0; i < aulas.size()-1; i++){
         for(size_t j = i+1; j < aulas.size(); j++){
+        tem_conflito = 0;
         if(aulas[i].horario->id == aulas[j].horario->id){
             if(aulas[i].disciplina->professor->id == aulas[j].disciplina->professor->id){
                 conflitos++;
-                aulas[i].observacao = "CONFLITO COM AULA " + to_string(j);
+                tem_conflito++;
             }
 
             if(aulas[i].disciplina->turma->id == aulas[j].disciplina->turma->id){
                 conflitos++;
-                aulas[i].observacao = "CONFLITO COM AULA " + to_string(j);
+                tem_conflito++;
             }
 
             if(aulas[i].sala->id == aulas[j].sala->id){
                 conflitos++;
-                aulas[i].observacao = "CONFLITO COM AULA " + to_string(j);
+                tem_conflito++;
             }
         }
+        if(tem_conflito)
+            aulas[i].observacao = (aulas[i].observacao == "")
+                                  ? "CONFLITO COM AULAS " + to_string(j) + "(" + to_string(tem_conflito) + ")"
+                                  : aulas[i].observacao + ", " + to_string(j) + "(" + to_string(tem_conflito) + ")";
         }
     }
     fitness = funcao_fitness(conflitos);
@@ -160,6 +184,11 @@ double Cronograma::get_fitness() const {
 // Retorna a aula i do cronograma.
 Aula Cronograma::get_aula(size_t i) const {
     return aulas[i];
+}
+
+// Inclui nova_aula na posição i do cronograma;
+void Cronograma::set_aula(size_t i, Aula nova_aula){
+    aulas[i] = nova_aula;
 }
 
 // Imprime o cronograma.
@@ -185,7 +214,7 @@ void Cronograma::imprimir(void) const {
                   << "Disciplina " << nome_disciplina
                   << " (Prof: " << nome_professor << ", Turma: " << nome_turma << ")"
                   << " | Sala: " << numero_sala
-                  << " | Horario: " << horario_desc
+                  << " | Horario: " << aula.horario->id << " " << horario_desc
                   << " | Observacao: " << aula_observacao
                   << std::endl;
     }
@@ -212,11 +241,17 @@ void Populacao::calcular_fitness_populacao(){
     cout << "Fitness da população sendo calculado." << endl;
     size_t i = 0;
     fitness_melhor = -1;
+    fitness_pior = 2;
     for (auto& individuo : individuos) {
         individuo.calcular_fitness();
         if(individuo.get_fitness() > fitness_melhor){
             melhor = i;
             fitness_melhor = individuo.get_fitness();
+        }
+
+        if(individuo.get_fitness() < fitness_pior){
+            pior = i;
+            fitness_pior = individuo.get_fitness();
         }
         i++;
     }
@@ -257,12 +292,14 @@ size_t Torneio(int grau, const Populacao& pop){
 // Se 0, herda do pai2.
 Cronograma uniform_crossover(const Cronograma& pai1, const Cronograma& pai2){
     Cronograma filho;
+    size_t bitmask = gerar_bitmask(N_AULAS);
 
     for(int i = 0; i < N_AULAS; i++){
-        if(aleatorio(2))
+        if((bitmask >> i) & 1)
             filho.adicionar_aula(pai1.get_aula(i)); // Se 1, gene i vem do pai1.
         else
             filho.adicionar_aula(pai2.get_aula(i)); // Senão, vem do pai2.
+        
         filho.set_observacao(i, "");
     }
 
@@ -304,7 +341,23 @@ void Populacao::evoluir_populacao(){
             filho = uniform_crossover(pai1, pai2);
             cout << "----------------------------------" << endl;
 
-            // IMPLEMENTAR MUTAÇÃO AQUI
+            // Mutação.
+            // Com probabilidade TAXA_MUTACAO, gera um indivíduo aleatório
+            // que passará alguns genes para o filho gerado.
+            if(realizar_mutacao()){
+                cout << "----------------------------------" << endl;
+                cout << "Realizando mutação" << endl;
+
+                Cronograma ind_aleatorio = Cronograma(disciplinas);
+                size_t bitmask = gerar_bitmask(N_AULAS);
+
+                for(int i = 0; i < N_AULAS; i++){
+                    if((bitmask >> i) & 1) // Se 1, gene i vem do aleatório.
+                        filho.set_aula(i, ind_aleatorio.get_aula(i));
+                }
+                cout << "Mutação realizada" << endl;
+                cout << "----------------------------------" << endl;
+            }
 
             individuos_novos.push_back(filho);
         }
@@ -317,15 +370,15 @@ void Populacao::evoluir_populacao(){
             break;
     }
 
-    if(fitness_melhor == 1.0){
+    if(fitness_melhor == 1.0)
         cout << "Indivíduo " << melhor << " tem fitness igual a 1." << endl;
-        individuos[melhor].imprimir();
-    }
     else
         cout << "Não foi encontrada uma solução." << endl;
 
-    cout << "\n\nImprimindo um cronograma com conflitos:" << endl;
-    individuos[2].imprimir();
+    cout << "Melhor indivíduo:" << endl;
+    individuos[melhor].imprimir();
+    cout << "\n\n Pior indivíduo:" << endl;
+    individuos[pior].imprimir();
 }
 
 int main(void){
