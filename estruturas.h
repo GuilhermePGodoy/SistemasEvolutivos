@@ -9,9 +9,9 @@ constexpr int N_AULAS = 64;
 constexpr int MAX_GEN = 1000;
 
 constexpr int N_SALAS = 8;
-constexpr int N_HORARIOS = 16;
+constexpr int N_HORARIOS = 20;
 constexpr int N_PROFESSORES = 20;
-constexpr int N_TURMAS = 30;
+constexpr int N_TURMAS = 64;
 constexpr int N_DISCIPLINAS = 64;
 
 constexpr double TAXA_MUTACAO = 0.01;
