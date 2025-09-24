@@ -89,6 +89,8 @@ private:
 public:
     // Gera a população inicial aleatoriamente.
     Populacao();
+    // Cria um JSON com a melhor solução.
+    void salvar_melhor_solucao_em_json(const std::string& nome_arquivo) const;
     // Calcula o fitness de todos os indivíduos.
     void calcular_fitness_populacao();
     // Retorna o indivíduo i.

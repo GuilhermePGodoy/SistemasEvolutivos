@@ -3,9 +3,16 @@
 #include <vector>
 #include <memory>
 #include <random>
+#include <fstream>
+#include <iomanip>
+#include "json.hpp"
 #include "estruturas.h"
 
 using namespace std;
+using json = nlohmann::json;
+
+// Protótipos de funções.
+int aleatorio(int max);
 
 // Vetores com todos os dados necessários.
 vector<shared_ptr<Sala>> salas;
@@ -63,8 +70,8 @@ void inicializar_dados_de_teste() {
     for (int i = 0; i < N_DISCIPLINAS; ++i) {
         // Associa a disciplina 'i' ao professor 'i' e à turma 'i' (exemplo simples)
         // O operador % garante que o índice nunca saia dos limites do vetor.
-        auto professor_associado = professores[i % professores.size()];
-        auto turma_associada = turmas[i % turmas.size()];
+        auto professor_associado = professores[aleatorio(65000) % professores.size()];
+        auto turma_associada = turmas[aleatorio(65000) % turmas.size()];
 
         disciplinas.push_back(std::make_shared<Disciplina>(Disciplina{i, professor_associado, turma_associada}));
     }
@@ -221,6 +228,55 @@ void Cronograma::imprimir(void) const {
     std::cout << "------------------------------------------" << std::endl;
 }
 
+// Gera um JSON com os dados do melhor indivíduo, para plotar a GUI.
+void Populacao::salvar_melhor_solucao_em_json(const string& nome_arquivo) const {
+    if (this->melhor == -1) {
+        std::cout << "Nenhuma solucao para salvar." << std::endl;
+        return;
+    }
+
+    const Cronograma& melhor_cronograma = this->individuos[this->melhor];
+    json json_output;
+    json_output["fitness"] = melhor_cronograma.get_fitness();
+    
+    json_output["aulas"] = json::array();
+
+    // Loop para verificar conflitos antes de salvar
+    std::vector<bool> tem_conflito(N_AULAS, false);
+    for (size_t i = 0; i < N_AULAS; ++i) {
+        for (size_t j = i + 1; j < N_AULAS; ++j) {
+            const Aula& a1 = melhor_cronograma.get_aula(i);
+            const Aula& a2 = melhor_cronograma.get_aula(j);
+            if (a1.horario->id == a2.horario->id) {
+                if (a1.disciplina->professor->id == a2.disciplina->professor->id ||
+                    a1.disciplina->turma->id == a2.disciplina->turma->id ||
+                    a1.sala->id == a2.sala->id) {
+                    tem_conflito[i] = true;
+                    tem_conflito[j] = true;
+                }
+            }
+        }
+    }
+
+    // Adiciona cada aula ao JSON
+    for (size_t i = 0; i < N_AULAS; ++i) {
+        const Aula& aula = melhor_cronograma.get_aula(i);
+        json aula_json;
+        aula_json["disciplina"] = "Disc " + std::to_string(aula.disciplina->id);
+        aula_json["professor"] = aula.disciplina->professor->nome;
+        aula_json["turma"] = aula.disciplina->turma->nome;
+        aula_json["sala"] = aula.sala->numero;
+        aula_json["horario"] = aula.horario->horario;
+        aula_json["tem_conflito"] = tem_conflito[i]; // Adiciona a flag de conflito
+        json_output["aulas"].push_back(aula_json);
+    }
+    
+    // Salva o JSON em um arquivo
+    std::ofstream arquivo(nome_arquivo);
+    arquivo << std::setw(4) << json_output << std::endl;
+    std::cout << "Solucao salva em " << nome_arquivo << std::endl;
+}
+
 // Gera a população inicial aleatoriamente.
 Populacao::Populacao(){
     cout << "Gerando população aleatoriamente." << endl;
@@ -315,12 +371,16 @@ void Populacao::evoluir_populacao(){
     size_t indice_pai1, indice_pai2;
     int grau = 2; // Número de indivíduos por torneio.
 
+    ofstream arquivo_fitness("fitness_por_geracao.txt");
+
     calcular_fitness_populacao();
 
     for(; gen < MAX_GEN; gen++){
         cout << "**********************************" << endl;
         cout << "GERAÇÃO " << gen << endl;
         cout << "**********************************" << endl;
+
+        arquivo_fitness << fitness_melhor << "\n";
      
         vector<Cronograma> individuos_novos;
 
@@ -366,8 +426,10 @@ void Populacao::evoluir_populacao(){
 
         calcular_fitness_populacao();
 
-        if(fitness_melhor == 1.0) // Um cronograma válido foi gerado.
+        if(fitness_melhor == 1.0){ // Um cronograma válido foi gerado.
+            arquivo_fitness << fitness_melhor;
             break;
+        }
     }
 
     if(fitness_melhor == 1.0)
@@ -387,6 +449,8 @@ int main(void){
     Populacao populacao;
     populacao.evoluir_populacao();
     cout << "Número de gerações: " << populacao.get_gen() << endl;
+
+    populacao.salvar_melhor_solucao_em_json("solucao.json");
 
     return 0;
 }
