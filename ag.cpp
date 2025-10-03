@@ -1,3 +1,5 @@
+//Para compilar: g++ -std=c++17 -Wall -fopenmp ag.cpp -o ag
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -5,6 +7,7 @@
 #include <random>
 #include <fstream>
 #include <iomanip>
+#include <omp.h>
 #include "json.hpp"
 #include "estruturas.h"
 
@@ -26,7 +29,7 @@ vector<string> horarios_possiveis = {"08:10", "10:10", "14:20", "16:20"};
 
 // Cria dados de teste.
 void inicializar_dados_de_teste() {
-    std::cout << "Inicializando dados de teste..." << std::endl;
+    // std::cout << "Inicializando dados de teste..." << std::endl;
 
     // Garante que os vetores estão vazios antes de começar
     salas.clear();
@@ -48,7 +51,7 @@ void inicializar_dados_de_teste() {
     int id = 0;
     for (auto dia : dias)
         for (auto horario : horarios_possiveis) {
-            cout << "id horario " << id << endl;
+            // cout << "id horario " << id << endl;
             std::string descricao_horario = dia + horario;
             horarios.push_back(std::make_shared<Horario>(Horario{id, descricao_horario}));
             id++;
@@ -76,8 +79,8 @@ void inicializar_dados_de_teste() {
         disciplinas.push_back(std::make_shared<Disciplina>(Disciplina{i, professor_associado, turma_associada}));
     }
 
-    std::cout << "Dados inicializados com sucesso." << std::endl;
-    std::cout << "----------------------------------" << std::endl;
+    // std::cout << "Dados inicializados com sucesso." << std::endl;
+    // std::cout << "----------------------------------" << std::endl;
 }
 
 
@@ -115,8 +118,8 @@ Cronograma::Cronograma(){
 // Cria vetor de aulas com as disciplinas na ordem em que
 // foram passadas no vector, com valores aleatórios nos outros campos.
 Cronograma::Cronograma(const vector<shared_ptr<Disciplina>>& disciplinas){
-    cout << "----------------------------------" << endl;
-    cout << "Inicializando cronograma aleatoriamente." << endl;
+    // cout << "----------------------------------" << endl;
+    // cout << "Inicializando cronograma aleatoriamente." << endl;
     int i;
     for(auto disciplina : disciplinas){
         Aula aula;
@@ -129,8 +132,8 @@ Cronograma::Cronograma(const vector<shared_ptr<Disciplina>>& disciplinas){
         aulas.push_back(aula);
     }
 
-    cout << "Cronograma inicializado com sucesso." << endl;
-    cout << "----------------------------------" << endl;
+    // cout << "Cronograma inicializado com sucesso." << endl;
+    // cout << "----------------------------------" << endl;
 }
 
 // Adiciona uma aula ao cronograma.
@@ -144,8 +147,8 @@ void Cronograma::adicionar_aula(Aula aula){
 // Uma turma não pode ter duas aulas ao mesmo tempo.
 // Uma sala não pode ser usada para duas aulas ao mesmo tempo.
 void Cronograma::calcular_fitness(){
-    cout << "----------------------------------" << endl;
-    cout << "Calculando fitness de um indivíduo." << endl;
+    // cout << "----------------------------------" << endl;
+    // cout << "Calculando fitness de um indivíduo." << endl;
     int conflitos = 0, tem_conflito = 0;
     for(size_t i = 0; i < aulas.size()-1; i++){
         for(size_t j = i+1; j < aulas.size(); j++){
@@ -174,8 +177,8 @@ void Cronograma::calcular_fitness(){
     }
     fitness = funcao_fitness(conflitos);
 
-    cout << "Fitness calculado com sucesso. Total de conflitos: " << conflitos << endl;
-    cout << "----------------------------------" << endl;
+    // cout << "Fitness calculado com sucesso. Total de conflitos: " << conflitos << endl;
+    // cout << "----------------------------------" << endl;
 }
 
 // Define a observação da aula i.
@@ -279,7 +282,7 @@ void Populacao::salvar_melhor_solucao_em_json(const string& nome_arquivo) const 
 
 // Gera a população inicial aleatoriamente.
 Populacao::Populacao(){
-    cout << "Gerando população aleatoriamente." << endl;
+    // cout << "Gerando população aleatoriamente." << endl;
 
     melhor = -1;
     fitness_melhor = -1;
@@ -288,13 +291,13 @@ Populacao::Populacao(){
         Cronograma individuo = Cronograma(disciplinas);
         individuos.push_back(individuo);
     }
-    cout << "População gerada com sucesso." << endl;
-    cout << "----------------------------------" << endl;
+    // cout << "População gerada com sucesso." << endl;
+    // cout << "----------------------------------" << endl;
 }
 
 // Calcula o fitness de todos os indivíduos.
 void Populacao::calcular_fitness_populacao(){
-    cout << "Fitness da população sendo calculado." << endl;
+    // cout << "Fitness da população sendo calculado." << endl;
     size_t i = 0;
     fitness_melhor = -1;
     fitness_pior = 2;
@@ -312,8 +315,8 @@ void Populacao::calcular_fitness_populacao(){
         i++;
     }
 
-    cout << "Fitness da população calculado." << endl;
-    cout << "----------------------------------" << endl;
+    // cout << "Fitness da população calculado." << endl;
+    // cout << "----------------------------------" << endl;
 }
 
 // Retorna o indivíduo i.
@@ -362,6 +365,12 @@ Cronograma uniform_crossover(const Cronograma& pai1, const Cronograma& pai2){
     return filho;
 }
 
+// Substitui o pior indivíduo por um novo aleatório, e calcula seu fitness.
+void Populacao::realizar_predacao(){
+    individuos[pior] = Cronograma(disciplinas);
+    calcular_fitness_populacao();
+}
+
 // Inicia o algoritmo evolutivo sobre a população.
 // Usa Torneio para escolher os pais.
 void Populacao::evoluir_populacao(){
@@ -376,9 +385,13 @@ void Populacao::evoluir_populacao(){
     calcular_fitness_populacao();
 
     for(; gen < MAX_GEN; gen++){
-        cout << "**********************************" << endl;
-        cout << "GERAÇÃO " << gen << endl;
-        cout << "**********************************" << endl;
+        // cout << "**********************************" << endl;
+        // cout << "GERAÇÃO " << gen << endl;
+        // cout << "**********************************" << endl;
+
+        // Realização da predação periodicamente.
+        if(!(gen % GEN_POR_CICLO_PREDACAO))
+            realizar_predacao();
 
         arquivo_fitness << fitness_melhor << "\n";
      
@@ -396,17 +409,17 @@ void Populacao::evoluir_populacao(){
             const Cronograma& pai1 = individuos[indice_pai1];
             const Cronograma& pai2 = individuos[indice_pai2];
 
-            cout << "----------------------------------" << endl;
-            cout << "Cruzamento dos indivíduos " << indice_pai1 << " e " << indice_pai2 << endl;
+            // cout << "----------------------------------" << endl;
+            // cout << "Cruzamento dos indivíduos " << indice_pai1 << " e " << indice_pai2 << endl;
             filho = uniform_crossover(pai1, pai2);
-            cout << "----------------------------------" << endl;
+            // cout << "----------------------------------" << endl;
 
             // Mutação.
             // Com probabilidade TAXA_MUTACAO, gera um indivíduo aleatório
             // que passará alguns genes para o filho gerado.
             if(realizar_mutacao()){
-                cout << "----------------------------------" << endl;
-                cout << "Realizando mutação" << endl;
+                // cout << "----------------------------------" << endl;
+                // cout << "Realizando mutação" << endl;
 
                 Cronograma ind_aleatorio = Cronograma(disciplinas);
                 size_t bitmask = gerar_bitmask(N_AULAS);
@@ -415,8 +428,8 @@ void Populacao::evoluir_populacao(){
                     if((bitmask >> i) & 1) // Se 1, gene i vem do aleatório.
                         filho.set_aula(i, ind_aleatorio.get_aula(i));
                 }
-                cout << "Mutação realizada" << endl;
-                cout << "----------------------------------" << endl;
+                // cout << "Mutação realizada" << endl;
+                // cout << "----------------------------------" << endl;
             }
 
             individuos_novos.push_back(filho);
@@ -432,25 +445,34 @@ void Populacao::evoluir_populacao(){
         }
     }
 
-    if(fitness_melhor == 1.0)
-        cout << "Indivíduo " << melhor << " tem fitness igual a 1." << endl;
-    else
-        cout << "Não foi encontrada uma solução." << endl;
+    // if(fitness_melhor == 1.0)
+    //     cout << "Indivíduo " << melhor << " tem fitness igual a 1." << endl;
+    // else
+    //     cout << "Não foi encontrada uma solução." << endl;
 
-    cout << "Melhor indivíduo:" << endl;
-    individuos[melhor].imprimir();
-    cout << "\n\n Pior indivíduo:" << endl;
-    individuos[pior].imprimir();
+    // cout << "Melhor indivíduo:" << endl;
+    // individuos[melhor].imprimir();
+    // cout << "\n\n Pior indivíduo:" << endl;
+    // individuos[pior].imprimir();
 }
 
-int main(void){
-    inicializar_dados_de_teste();
-    
+void simulacao(){
     Populacao populacao;
+        
     populacao.evoluir_populacao();
     cout << "Número de gerações: " << populacao.get_gen() << endl;
 
-    populacao.salvar_melhor_solucao_em_json("solucao.json");
+    //populacao.salvar_melhor_solucao_em_json("solucao.json");
+}
+
+int main(void){
+    inicializar_dados_de_teste(); // Modifica variáveis globais; tem que estar fora da região paralela.
+
+    // Cria 8 threads que evoluirão populações independentemente.
+    #pragma omp parallel num_threads(8)
+    {
+        simulacao();
+    }
 
     return 0;
 }

@@ -13,6 +13,7 @@ constexpr int N_HORARIOS = 20;
 constexpr int N_PROFESSORES = 20;
 constexpr int N_TURMAS = 64;
 constexpr int N_DISCIPLINAS = 64;
+constexpr int GEN_POR_CICLO_PREDACAO = 10;
 
 constexpr double TAXA_MUTACAO = 0.01;
 
@@ -93,6 +94,8 @@ public:
     void salvar_melhor_solucao_em_json(const std::string& nome_arquivo) const;
     // Calcula o fitness de todos os indivíduos.
     void calcular_fitness_populacao();
+    // Substitui o pior indivíduo por um novo aleatório, e calcula seu fitness.
+    void realizar_predacao();
     // Retorna o indivíduo i.
     Cronograma get_individuo(size_t i) const;
     // Retorna o índice do melhor indivíduo.
