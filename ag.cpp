@@ -66,7 +66,8 @@ void inicializar_dados_de_teste() {
     // --- Cria Turmas ---
     for (int i = 0; i < N_TURMAS; ++i) {
         std::string nome_turma = "Turma " + std::to_string(i + 1);
-        turmas.push_back(std::make_shared<Turma>(Turma{i, nome_turma}));
+        int num_alunos = 20 + i;
+        turmas.push_back(std::make_shared<Turma>(Turma{i, num_alunos, nome_turma}));
     }
 
     // --- Cria Disciplinas e as associa a Professores e Turmas ---
@@ -101,8 +102,33 @@ size_t gerar_bitmask(int tam){
     return bitmask;
 }
 
-bool realizar_mutacao(void){
-    return aleatorio(100) <= TAXA_MUTACAO*100;
+// Com chance TAXA_MUTACAO, realiza mutação escolhendo, com igual probabilidade,
+// os genes entre o filho original e um indivíduo aleatório.
+void realizar_mutacao_1(Cronograma& filho){
+    if(aleatorio(100) < TAXA_MUTACAO*100){
+        // cout << "----------------------------------" << endl;
+        // cout << "Realizando mutação" << endl;
+
+        Cronograma ind_aleatorio = Cronograma(disciplinas);
+        size_t bitmask = gerar_bitmask(N_AULAS);
+
+        for(int i = 0; i < N_AULAS; i++){
+            if((bitmask >> i) & 1) // Se 1, gene i vem do aleatório.
+                filho.set_aula(i, ind_aleatorio.get_aula(i));
+        }
+        // cout << "Mutação realizada" << endl;
+        // cout << "----------------------------------" << endl;
+    }
+}
+
+// Com chance TAXA_MUTACAO, cada gene vem do indivíduo aleatório.
+void realizar_mutacao_2(Cronograma& filho){
+    Cronograma ind_aleatorio = Cronograma(disciplinas);
+    
+    for(int i = 0; i < N_AULAS; i++){
+        if((aleatorio(100) < TAXA_MUTACAO*100)) // Se true, gene i vem do aleatório.
+            filho.set_aula(i, ind_aleatorio.get_aula(i));
+    }
 }
 
 // Função de fitness usada para avaliar os indivíduos.
@@ -151,24 +177,37 @@ void Cronograma::calcular_fitness(){
     // cout << "Calculando fitness de um indivíduo." << endl;
     int conflitos = 0, tem_conflito = 0;
     for(size_t i = 0; i < aulas.size()-1; i++){
+        
+        //Conflitos relacionados à capacidade das salas.
+        if(aulas[i].sala->capacidade < aulas[i].disciplina->turma->num_alunos){
+            conflitos++;
+            tem_conflito++;
+        }
+
         for(size_t j = i+1; j < aulas.size(); j++){
         tem_conflito = 0;
-        if(aulas[i].horario->id == aulas[j].horario->id){
+
+        // Conflitos relacionados a horários.
+        if(aulas[i].horario->id == aulas[j].horario->id){ 
+            // Mesmo professor dando duas aulas ao mesmo tempo.
             if(aulas[i].disciplina->professor->id == aulas[j].disciplina->professor->id){
                 conflitos++;
                 tem_conflito++;
             }
 
+            // Mesma turma tendo duas aulas ao mesmo tempo.
             if(aulas[i].disciplina->turma->id == aulas[j].disciplina->turma->id){
                 conflitos++;
                 tem_conflito++;
             }
 
+            // Mesma sala sendo usada para duas aulas ao mesmo tempo.
             if(aulas[i].sala->id == aulas[j].sala->id){
                 conflitos++;
                 tem_conflito++;
             }
         }
+
         if(tem_conflito)
             aulas[i].observacao = (aulas[i].observacao == "")
                                   ? "CONFLITO COM AULAS " + to_string(j) + "(" + to_string(tem_conflito) + ")"
@@ -417,20 +456,7 @@ void Populacao::evoluir_populacao(){
             // Mutação.
             // Com probabilidade TAXA_MUTACAO, gera um indivíduo aleatório
             // que passará alguns genes para o filho gerado.
-            if(realizar_mutacao()){
-                // cout << "----------------------------------" << endl;
-                // cout << "Realizando mutação" << endl;
-
-                Cronograma ind_aleatorio = Cronograma(disciplinas);
-                size_t bitmask = gerar_bitmask(N_AULAS);
-
-                for(int i = 0; i < N_AULAS; i++){
-                    if((bitmask >> i) & 1) // Se 1, gene i vem do aleatório.
-                        filho.set_aula(i, ind_aleatorio.get_aula(i));
-                }
-                // cout << "Mutação realizada" << endl;
-                // cout << "----------------------------------" << endl;
-            }
+            realizar_mutacao_1(filho);
 
             individuos_novos.push_back(filho);
         }

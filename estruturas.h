@@ -8,7 +8,7 @@ constexpr int TAM_POP = 100;
 constexpr int N_AULAS = 64;
 constexpr int MAX_GEN = 1000;
 
-constexpr int N_SALAS = 8;
+constexpr int N_SALAS = 20;
 constexpr int N_HORARIOS = 20;
 constexpr int N_PROFESSORES = 20;
 constexpr int N_TURMAS = 64;
@@ -35,6 +35,7 @@ struct Professor{
 
 struct Turma{
     int id;
+    int num_alunos;
     std::string nome;
 };
 
