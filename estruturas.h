@@ -15,7 +15,7 @@ constexpr int N_TURMAS = 64;
 constexpr int N_DISCIPLINAS = 64;
 constexpr int GEN_POR_CICLO_PREDACAO = 10;
 
-constexpr double TAXA_MUTACAO = 0.01;
+constexpr double TAXA_BASE_MUTACAO = 0.01;
 
 struct Sala{
     int id;
@@ -84,6 +84,7 @@ private:
     std::vector<Cronograma> individuos;
     int melhor;
     double fitness_melhor;
+    double fitness_melhor_anterior;
     int pior;
     double fitness_pior;
     int gen;

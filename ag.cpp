@@ -14,6 +14,11 @@
 using namespace std;
 using json = nlohmann::json;
 
+// Variáveis globais
+double TAXA_MUTACAO = TAXA_BASE_MUTACAO; // Para aplicar mutação variável.
+int MULT_MUTACAO = 1;
+int MULT_MAX = 2;
+
 // Protótipos de funções.
 int aleatorio(int max);
 
@@ -123,6 +128,7 @@ void realizar_mutacao_1(Cronograma& filho){
 
 // Com chance TAXA_MUTACAO, cada gene vem do indivíduo aleatório.
 void realizar_mutacao_2(Cronograma& filho){
+    // cout << "Realizando mutação com taxa = " << TAXA_MUTACAO << endl;
     Cronograma ind_aleatorio = Cronograma(disciplinas);
     
     for(int i = 0; i < N_AULAS; i++){
@@ -324,6 +330,7 @@ Populacao::Populacao(){
     // cout << "Gerando população aleatoriamente." << endl;
 
     melhor = -1;
+    fitness_melhor_anterior = -1;
     fitness_melhor = -1;
     gen = 0;
     for(int i = 0; i < TAM_POP; i++){
@@ -338,6 +345,7 @@ Populacao::Populacao(){
 void Populacao::calcular_fitness_populacao(){
     // cout << "Fitness da população sendo calculado." << endl;
     size_t i = 0;
+    fitness_melhor_anterior = fitness_melhor;
     fitness_melhor = -1;
     fitness_pior = 2;
     for (auto& individuo : individuos) {
@@ -355,6 +363,7 @@ void Populacao::calcular_fitness_populacao(){
     }
 
     // cout << "Fitness da população calculado." << endl;
+    // cout << "melhor: " << fitness_melhor << " melhor_anterior: " << fitness_melhor_anterior << endl;
     // cout << "----------------------------------" << endl;
 }
 
@@ -424,6 +433,21 @@ void Populacao::evoluir_populacao(){
     calcular_fitness_populacao();
 
     for(; gen < MAX_GEN; gen++){
+
+        // Aplica a técnica de taxa de mutação variável.
+        // cout << "----------------------TAXAS-----------------------" << endl; 
+        // cout << fitness_melhor << " " << fitness_melhor_anterior << endl;
+        // cout << "--------------------------------------------------" << endl; 
+        if(fitness_melhor == fitness_melhor_anterior){ // Aumenta a taxa de mutação se não houve mudança no melhor...
+            if(MULT_MUTACAO < MULT_MAX){ // ... até um dado limite.
+                MULT_MUTACAO++;
+                TAXA_MUTACAO = TAXA_BASE_MUTACAO*MULT_MUTACAO;
+            }
+        }
+        else{ // Restaura a taxa de mutação original se houve mudança no melhor.
+            MULT_MUTACAO = 1;
+            TAXA_MUTACAO = TAXA_BASE_MUTACAO;
+        }
         // cout << "**********************************" << endl;
         // cout << "GERAÇÃO " << gen << endl;
         // cout << "**********************************" << endl;
@@ -456,7 +480,7 @@ void Populacao::evoluir_populacao(){
             // Mutação.
             // Com probabilidade TAXA_MUTACAO, gera um indivíduo aleatório
             // que passará alguns genes para o filho gerado.
-            realizar_mutacao_1(filho);
+            realizar_mutacao_2(filho);
 
             individuos_novos.push_back(filho);
         }
@@ -482,22 +506,38 @@ void Populacao::evoluir_populacao(){
     // individuos[pior].imprimir();
 }
 
-void simulacao(){
+int simulacao(){
     Populacao populacao;
         
     populacao.evoluir_populacao();
-    cout << "Número de gerações: " << populacao.get_gen() << endl;
+    // cout << "------------------------" << endl;
+    // cout << "Número de gerações: " << populacao.get_gen() << endl;
+    // cout << "Fitness do melhor indivíduo: " << populacao.get_individuo(populacao.get_melhor()).get_fitness() << endl;
+    // cout << "------------------------" << endl;
 
     //populacao.salvar_melhor_solucao_em_json("solucao.json");
+    return populacao.get_gen();
 }
 
 int main(void){
     inicializar_dados_de_teste(); // Modifica variáveis globais; tem que estar fora da região paralela.
 
     // Cria 8 threads que evoluirão populações independentemente.
-    #pragma omp parallel num_threads(8)
-    {
-        simulacao();
+    // #pragma omp parallel num_threads(8)
+    // {
+    //     simulacao();
+    // }
+
+    int NUM_SIMULACOES = 10;
+    int soma_gen = 0;
+    vector<int> maximos_mutacao = {1, 2, 3, 4, 5, 6, 7, 8};
+    for(auto max : maximos_mutacao){
+        MULT_MAX = max;
+        cout << "Com multiplicador máximo de " << MULT_MAX << ":" << endl;
+        for(int i = 0; i < NUM_SIMULACOES; i++){
+            soma_gen += simulacao();
+        }
+        cout << "Média de número de gerações: " << (double) soma_gen/NUM_SIMULACOES << endl;
     }
 
     return 0;
