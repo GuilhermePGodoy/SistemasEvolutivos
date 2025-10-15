@@ -4,14 +4,14 @@
 #include <vector>
 #include <memory>
 
-constexpr int TAM_POP = 100;
+constexpr int TAM_POP = 200;
 constexpr int N_AULAS = 64;
 constexpr int MAX_GEN = 1000;
 
 constexpr int N_SALAS = 20;
 constexpr int N_HORARIOS = 20;
 constexpr int N_PROFESSORES = 20;
-constexpr int N_TURMAS = 64;
+constexpr int N_TURMAS = 30;
 constexpr int N_DISCIPLINAS = 64;
 constexpr int GEN_POR_CICLO_PREDACAO = 10;
 
@@ -55,6 +55,8 @@ struct Aula{
 class Cronograma{
 private:
     std::vector<Aula> aulas;
+    int conflitos_leves;
+    int conflitos_duros;
     double fitness;
 
 public:
@@ -73,6 +75,10 @@ public:
     Aula get_aula(size_t i) const;
     // Inclui nova_aula na posição i do cronograma;
     void set_aula(size_t i, Aula nova_aula);
+    // Retorna número de conflitos leves;
+    int get_conflitos_leves() const;
+    // Retorna número de conflitos duros;
+    int get_conflitos_duros() const;
     // Retorna o valor salvo do fitness do indivíduo.
     double get_fitness() const;
     // Imprime o cronograma.
@@ -92,8 +98,8 @@ private:
 public:
     // Gera a população inicial aleatoriamente.
     Populacao();
-    // Cria um JSON com a melhor solução.
-    void salvar_melhor_solucao_em_json(const std::string& nome_arquivo) const;
+    // Cria um JSON com a solução de posição "ind".
+    void salvar_solucao_em_json(const std::string& nome_arquivo, size_t ind) const;
     // Calcula o fitness de todos os indivíduos.
     void calcular_fitness_populacao();
     // Substitui o pior indivíduo por um novo aleatório, e calcula seu fitness.
@@ -102,6 +108,8 @@ public:
     Cronograma get_individuo(size_t i) const;
     // Retorna o índice do melhor indivíduo.
     int get_melhor() const;
+    // Retorna o índice do pior indivíduo.
+    int get_pior() const;
     // Retorna a o número da geração atual da população.
     int get_gen() const;
     // Inicia o algoritmo evolutivo sobre a população.

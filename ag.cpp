@@ -46,7 +46,8 @@ void inicializar_dados_de_teste() {
     // --- Cria Salas ---
     for (int i = 0; i < N_SALAS; ++i) {
         // Gera um nome "Sala 101", "Sala 102", etc.
-        std::string numero_sala = "Sala " + std::to_string(101 + i);
+        string numero_sala = "Sala " + to_string(101 + i);
+
         // Capacidade varia de 20 a 70
         int capacidade = 20 + (i * 5); 
         salas.push_back(std::make_shared<Sala>(Sala{i, numero_sala, capacidade}));
@@ -152,6 +153,8 @@ Cronograma::Cronograma(){
 Cronograma::Cronograma(const vector<shared_ptr<Disciplina>>& disciplinas){
     // cout << "----------------------------------" << endl;
     // cout << "Inicializando cronograma aleatoriamente." << endl;
+    conflitos_leves = conflitos_duros = 0;
+
     int i;
     for(auto disciplina : disciplinas){
         Aula aula;
@@ -181,36 +184,57 @@ void Cronograma::adicionar_aula(Aula aula){
 void Cronograma::calcular_fitness(){
     // cout << "----------------------------------" << endl;
     // cout << "Calculando fitness de um indivíduo." << endl;
-    int conflitos = 0, tem_conflito = 0;
+    int PESO_CONFLITOS_DUROS = 100, PESO_CONFLITOS_LEVES = 1;
+    conflitos_leves = conflitos_duros = 0;
+    int penalidade = 0, tem_conflito = 0;
+
     for(size_t i = 0; i < aulas.size()-1; i++){
-        
+
+        // HARD CONSTRAINT
         //Conflitos relacionados à capacidade das salas.
         if(aulas[i].sala->capacidade < aulas[i].disciplina->turma->num_alunos){
-            conflitos++;
+            conflitos_duros++;
             tem_conflito++;
         }
 
         for(size_t j = i+1; j < aulas.size(); j++){
         tem_conflito = 0;
 
+        // HARD CONSTRAINTS
         // Conflitos relacionados a horários.
         if(aulas[i].horario->id == aulas[j].horario->id){ 
             // Mesmo professor dando duas aulas ao mesmo tempo.
             if(aulas[i].disciplina->professor->id == aulas[j].disciplina->professor->id){
-                conflitos++;
+                conflitos_duros++;
                 tem_conflito++;
             }
 
             // Mesma turma tendo duas aulas ao mesmo tempo.
             if(aulas[i].disciplina->turma->id == aulas[j].disciplina->turma->id){
-                conflitos++;
+                conflitos_duros++;
                 tem_conflito++;
             }
 
             // Mesma sala sendo usada para duas aulas ao mesmo tempo.
             if(aulas[i].sala->id == aulas[j].sala->id){
-                conflitos++;
+                conflitos_duros++;
                 tem_conflito++;
+            }
+
+            // SOFT CONSTRAINTS
+
+        }
+        
+        // SOFT CONSTRAINT
+        // Aulas em salas distantes entre si preferencialmente não são consecutivas.
+        if((aulas[i].disciplina->professor->id == aulas[j].disciplina->professor->id
+                || aulas[i].disciplina->turma->id == aulas[j].disciplina->turma->id) &&
+            (aulas[i].horario->id == aulas[j].horario->id + 1 // ATENÇÃO: 10:10 NÃO É CONSECUTIVA A 14:20
+                || aulas[j].horario->id == aulas[i].horario->id + 1)){
+            
+            if((aulas[i].sala->id < N_SALAS/2 && aulas[j].sala->id >= N_SALAS/2)
+                || (aulas[i].sala->id >= N_SALAS/2 && aulas[j].sala->id < N_SALAS/2)){
+                conflitos_leves++;
             }
         }
 
@@ -220,7 +244,8 @@ void Cronograma::calcular_fitness(){
                                   : aulas[i].observacao + ", " + to_string(j) + "(" + to_string(tem_conflito) + ")";
         }
     }
-    fitness = funcao_fitness(conflitos);
+    penalidade = conflitos_leves*PESO_CONFLITOS_LEVES + conflitos_duros*PESO_CONFLITOS_DUROS;
+    fitness = funcao_fitness(penalidade);
 
     // cout << "Fitness calculado com sucesso. Total de conflitos: " << conflitos << endl;
     // cout << "----------------------------------" << endl;
@@ -234,6 +259,16 @@ void Cronograma::set_observacao(size_t i, string obs){
 // Retorna o valor salvo do fitness do indivíduo.
 double Cronograma::get_fitness() const {
     return fitness;
+}
+
+// Retorna número de conflitos leves.
+int Cronograma::get_conflitos_leves() const {
+    return conflitos_leves;
+}
+
+// Retorna número de conflitos duros.
+int Cronograma::get_conflitos_duros() const {
+    return conflitos_duros;
 }
 
 // Retorna a aula i do cronograma.
@@ -277,13 +312,13 @@ void Cronograma::imprimir(void) const {
 }
 
 // Gera um JSON com os dados do melhor indivíduo, para plotar a GUI.
-void Populacao::salvar_melhor_solucao_em_json(const string& nome_arquivo) const {
+void Populacao::salvar_solucao_em_json(const string& nome_arquivo, size_t ind) const {
     if (this->melhor == -1) {
         std::cout << "Nenhuma solucao para salvar." << std::endl;
         return;
     }
 
-    const Cronograma& melhor_cronograma = this->individuos[this->melhor];
+    const Cronograma& melhor_cronograma = this->individuos[ind];
     json json_output;
     json_output["fitness"] = melhor_cronograma.get_fitness();
     
@@ -313,7 +348,7 @@ void Populacao::salvar_melhor_solucao_em_json(const string& nome_arquivo) const 
         aula_json["disciplina"] = "Disc " + std::to_string(aula.disciplina->id);
         aula_json["professor"] = aula.disciplina->professor->nome;
         aula_json["turma"] = aula.disciplina->turma->nome;
-        aula_json["sala"] = aula.sala->numero;
+        aula_json["sala"] = aula.sala->id;
         aula_json["horario"] = aula.horario->horario;
         aula_json["tem_conflito"] = tem_conflito[i]; // Adiciona a flag de conflito
         json_output["aulas"].push_back(aula_json);
@@ -375,6 +410,11 @@ Cronograma Populacao::get_individuo(size_t i) const {
 // Retorna o índice do melhor indivíduo.
 int Populacao::get_melhor() const {
     return melhor;
+}
+
+// Retorna o índice do pior indivíduo.
+int Populacao::get_pior() const {
+    return pior;
 }
 
 int Populacao::get_gen() const {
@@ -489,6 +529,11 @@ void Populacao::evoluir_populacao(){
 
         calcular_fitness_populacao();
 
+        if(individuos[melhor].get_conflitos_duros() == 0){
+            cout << "Melhor não tem conflitos duros. Número de conflitos leves: " 
+                 << individuos[melhor].get_conflitos_leves() << endl;
+        }
+
         if(fitness_melhor == 1.0){ // Um cronograma válido foi gerado.
             arquivo_fitness << fitness_melhor;
             break;
@@ -515,30 +560,40 @@ int simulacao(){
     // cout << "Fitness do melhor indivíduo: " << populacao.get_individuo(populacao.get_melhor()).get_fitness() << endl;
     // cout << "------------------------" << endl;
 
-    //populacao.salvar_melhor_solucao_em_json("solucao.json");
+    // Salva o melhor cronograma em um JSON para uso na interface gráfica.
+    populacao.salvar_solucao_em_json("melhor_solucao.json", populacao.get_melhor());
+    // Salva o pior em outro arquivo para ver os conflitos.
+    populacao.salvar_solucao_em_json("pior_solucao.json", populacao.get_pior());
+
     return populacao.get_gen();
 }
 
 int main(void){
     inicializar_dados_de_teste(); // Modifica variáveis globais; tem que estar fora da região paralela.
 
+    // SIMULAÇÃO PARALELA
     // Cria 8 threads que evoluirão populações independentemente.
     // #pragma omp parallel num_threads(8)
     // {
     //     simulacao();
     // }
 
-    int NUM_SIMULACOES = 10;
-    int soma_gen = 0;
-    vector<int> maximos_mutacao = {1, 2, 3, 4, 5, 6, 7, 8};
-    for(auto max : maximos_mutacao){
-        MULT_MAX = max;
-        cout << "Com multiplicador máximo de " << MULT_MAX << ":" << endl;
-        for(int i = 0; i < NUM_SIMULACOES; i++){
-            soma_gen += simulacao();
-        }
-        cout << "Média de número de gerações: " << (double) soma_gen/NUM_SIMULACOES << endl;
-    }
+
+    // CÓDIGO DE TESTES
+    // int NUM_SIMULACOES = 100;
+    // int soma_gen;
+    // vector<int> maximos_mutacao = {1, 2, 3};
+    // for(auto max : maximos_mutacao){
+    //     MULT_MAX = max;
+    //     soma_gen = 0;
+    //     cout << "Com multiplicador máximo de " << MULT_MAX << ":" << endl;
+    //     for(int i = 0; i < NUM_SIMULACOES; i++){
+    //         soma_gen += simulacao();
+    //     }
+    //     cout << "Média de número de gerações: " << (double) soma_gen/NUM_SIMULACOES << endl;
+    // }
+
+    cout << "Número de gerações: " << simulacao() << endl;
 
     return 0;
 }
