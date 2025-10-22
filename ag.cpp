@@ -14,15 +14,24 @@
 using namespace std;
 using json = nlohmann::json;
 
-// Variáveis globais
+// =============== VARIÁVEIS GLOBAIS ===============
+
 double TAXA_MUTACAO = TAXA_BASE_MUTACAO; // Para aplicar mutação variável.
 int MULT_MUTACAO = 1;
 int MULT_MAX = 2;
 
-// Protótipos de funções.
+// =================================================
+
+
+// =============== PROTÓTIPOS DE FUNÇÕES ===============
+
 int aleatorio(int max);
 
-// Vetores com todos os dados necessários.
+// =====================================================
+
+
+// =============== DADOS ===============
+
 vector<shared_ptr<Sala>> salas;
 vector<shared_ptr<Horario>> horarios;
 vector<shared_ptr<Professor>> professores;
@@ -31,6 +40,11 @@ vector<shared_ptr<Disciplina>> disciplinas;
 
 vector<string> dias = {"segunda-feira ", "terça-feira ", "quarta-feira ", "quinta-feira ", "sexta-feira "};
 vector<string> horarios_possiveis = {"08:10", "10:10", "14:20", "16:20"};
+
+// ======================================
+
+
+// =============== INICIALIZAÇÃO DOS DADOS ===============
 
 // Cria dados de teste.
 void inicializar_dados_de_teste() {
@@ -90,7 +104,12 @@ void inicializar_dados_de_teste() {
     // std::cout << "----------------------------------" << std::endl;
 }
 
+// ==================================================
 
+
+// =============== FUNÇÕES AUXILIARES ===============
+
+// Gera número aleatório no range (0, max).
 int aleatorio(int max) {
     static random_device rd;
     static mt19937 motor(rd());
@@ -106,6 +125,48 @@ size_t gerar_bitmask(int tam){
         bitmask = (bitmask << 1) | aleatorio(2);
 
     return bitmask;
+}
+
+// ================================================================
+
+
+// =============== FUNÇÕES PARA O ALGORITMO GENÉTICO ===============
+
+// Função de fitness usada para avaliar os indivíduos.
+double funcao_fitness(int conflitos){
+    return 1.0/(conflitos+1);
+}
+
+// Implementa Torneio para escolher os pais.
+size_t Torneio(int grau, const Populacao& pop){
+    size_t ind, melhor;
+    melhor = (size_t) aleatorio(TAM_POP);
+    for(int i = 1; i < grau; i++){
+        ind = (size_t) aleatorio(TAM_POP);
+        melhor = (pop.get_individuo(ind).get_fitness() > pop.get_individuo(melhor).get_fitness()) ? ind : melhor;
+    }
+
+    return melhor;
+}
+
+// Gera um filho por meio de uniform crossover.
+// Para cada gene (aula), um número aleatório é gerado.
+// Se 1, o filho herda o gene do pai1.
+// Se 0, herda do pai2.
+Cronograma uniform_crossover(const Cronograma& pai1, const Cronograma& pai2){
+    Cronograma filho;
+    size_t bitmask = gerar_bitmask(N_AULAS);
+
+    for(int i = 0; i < N_AULAS; i++){
+        if((bitmask >> i) & 1)
+            filho.adicionar_aula(pai1.get_aula(i)); // Se 1, gene i vem do pai1.
+        else
+            filho.adicionar_aula(pai2.get_aula(i)); // Senão, vem do pai2.
+        
+        filho.set_observacao(i, "");
+    }
+
+    return filho;
 }
 
 // Com chance TAXA_MUTACAO, realiza mutação escolhendo, com igual probabilidade,
@@ -138,10 +199,10 @@ void realizar_mutacao_2(Cronograma& filho){
     }
 }
 
-// Função de fitness usada para avaliar os indivíduos.
-double funcao_fitness(int conflitos){
-    return 1.0/(conflitos+1);
-}
+// ============================================================
+
+
+// =============== MÉTODOS DA CLASSE CRONOGRAMA ===============
 
 // Construtor padrão.
 Cronograma::Cronograma(){
@@ -311,6 +372,11 @@ void Cronograma::imprimir(void) const {
     std::cout << "------------------------------------------" << std::endl;
 }
 
+// ===========================================================
+
+
+// =============== MÉTODOS DA CLASSE POPULAÇÃO ===============
+
 // Gera um JSON com os dados do melhor indivíduo, para plotar a GUI.
 void Populacao::salvar_solucao_em_json(const string& nome_arquivo, size_t ind) const {
     if (this->melhor == -1) {
@@ -421,38 +487,6 @@ int Populacao::get_gen() const {
     return gen;
 }
 
-// Implementa Torneio para escolher os pais.
-size_t Torneio(int grau, const Populacao& pop){
-    size_t ind, melhor;
-    melhor = (size_t) aleatorio(TAM_POP);
-    for(int i = 1; i < grau; i++){
-        ind = (size_t) aleatorio(TAM_POP);
-        melhor = (pop.get_individuo(ind).get_fitness() > pop.get_individuo(melhor).get_fitness()) ? ind : melhor;
-    }
-
-    return melhor;
-}
-
-// Gera um filho por meio de uniform crossover.
-// Para cada gene (aula), um número aleatório é gerado.
-// Se 1, o filho herda o gene do pai1.
-// Se 0, herda do pai2.
-Cronograma uniform_crossover(const Cronograma& pai1, const Cronograma& pai2){
-    Cronograma filho;
-    size_t bitmask = gerar_bitmask(N_AULAS);
-
-    for(int i = 0; i < N_AULAS; i++){
-        if((bitmask >> i) & 1)
-            filho.adicionar_aula(pai1.get_aula(i)); // Se 1, gene i vem do pai1.
-        else
-            filho.adicionar_aula(pai2.get_aula(i)); // Senão, vem do pai2.
-        
-        filho.set_observacao(i, "");
-    }
-
-    return filho;
-}
-
 // Substitui o pior indivíduo por um novo aleatório, e calcula seu fitness.
 void Populacao::realizar_predacao(){
     individuos[pior] = Cronograma(disciplinas);
@@ -550,6 +584,8 @@ void Populacao::evoluir_populacao(){
     // cout << "\n\n Pior indivíduo:" << endl;
     // individuos[pior].imprimir();
 }
+
+// =============================================
 
 int simulacao(){
     Populacao populacao;
