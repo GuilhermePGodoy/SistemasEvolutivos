@@ -20,6 +20,8 @@ constexpr double TAXA_BASE_MUTACAO = 0.01;
 struct Sala{
     int id;
     std::string numero;
+    int campus;
+    std::string tipo; // lab ou teórica
     int capacidade;
 };
 
@@ -35,14 +37,18 @@ struct Professor{
 
 struct Turma{
     int id;
+    std::string turma;
     int num_alunos;
-    std::string nome;
 };
 
 struct Disciplina{
     int id;
+    std::string nome;
     std::shared_ptr<Professor> professor;
     std::shared_ptr<Turma> turma;
+    int num_aulas_semana;
+    std::string tipo; // lab ou teorica
+    int campus; // 1 ou 2 
 };
 
 struct Aula{

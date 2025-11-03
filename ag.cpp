@@ -105,6 +105,71 @@ void inicializar_dados_de_teste() {
     // std::cout << "----------------------------------" << std::endl;
 }
 
+void ler_arquivo_entrada(const string& nome_arquivo){
+    ifstream f(nome_arquivo);
+    if(!f.is_open()){
+        cerr << "Erro ao abrir o arquivo.\n";
+        return;
+    }
+
+    salas.clear();
+    horarios.clear();
+    professores.clear();
+    turmas.clear();
+    disciplinas.clear();
+
+    map<int, shared_ptr<Professor>> mapa_professores;
+    map<int, shared_ptr<Turma>> mapa_turmas;
+
+    json dados = json::parse(f);
+
+    int id = 1;
+    for(const auto& sala : dados["salas"]){
+        auto ptr = make_shared<Sala>(Sala{
+            id,
+            sala["numero"].get<string>(),
+            sala["campus"].get<int>(),
+            sala["tipo"].get<string>(),
+            sala["capacidade"].get<int>()
+        });
+        salas.push_back(ptr);
+        id++;
+    }
+
+    int id = 1;
+    for(const auto& horario : dados["horarios"]){
+        auto ptr = make_shared<Horario>(Horario{
+            id,
+            horario["horario"].get<string>()
+        });
+        horarios.push_back(ptr);
+        id++;
+    }
+
+    for(const auto& professor : dados["professores"]){
+        auto ptr = make_shared<Professor>(Professor{
+            professor["id"].get<int>(),
+            professor["nome"].get<string>()
+        });
+        professor.push_back(ptr);
+
+        mapa_professores[professor["id"].get<int>()] = ptr;
+    }
+
+    for(const auto& turma : dados["turmas"]){
+        auto ptr = make_shared<Turma>(Turma{
+            turma["id"].get<int>(),
+            turma["turma"].get<string>(),
+            turma["numero alunos"].get<int>(),
+        });
+        turma.push_back(ptr);
+
+        mapa_turmas[turma["id"].get<int>()] = ptr;
+    }
+
+    TODO: ler as disciplinas no arquivo.
+}
+
 // ==================================================
 
 
@@ -219,14 +284,16 @@ Cronograma::Cronograma(const vector<shared_ptr<Disciplina>>& disciplinas){
 
     int i;
     for(auto disciplina : disciplinas){
-        Aula aula;
-        i = aleatorio(N_HORARIOS);
-        aula.horario = horarios[i];
-        i = aleatorio(N_SALAS);
-        aula.sala = salas[i];
-        aula.disciplina = disciplina;
+        for(int i = 0; i < disciplina.num_aulas_semana; i++){
+            Aula aula;
+            i = aleatorio(N_HORARIOS);
+            aula.horario = horarios[i];
+            i = aleatorio(N_SALAS);
+            aula.sala = salas[i];
+            aula.disciplina = disciplina;
 
-        aulas.push_back(aula);
+            aulas.push_back(aula);
+        }
     }
 
     // cout << "Cronograma inicializado com sucesso." << endl;
@@ -255,6 +322,18 @@ void Cronograma::calcular_fitness(){
         // HARD CONSTRAINT
         //Conflitos relacionados à capacidade das salas.
         if(aulas[i].sala->capacidade < aulas[i].disciplina->turma->num_alunos){
+            conflitos_duros++;
+            tem_conflito++;
+        }
+
+        //Relação com o campus no qual a aula foi alocada.
+        if(aulas[i].sala->campus != aulas[i].disciplina->campus){
+            conflitos_duros++;
+            tem_conflito++;
+        }
+
+        // Relação com o tipo da aula.
+        if(aulas[i].sala->tipo != aulas[i].disciplina->tipo){
             conflitos_duros++;
             tem_conflito++;
         }
