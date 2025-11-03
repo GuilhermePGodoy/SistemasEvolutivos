@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <vector>
 #include <memory>
 #include <random>
@@ -493,6 +494,59 @@ void Populacao::realizar_predacao(){
     calcular_fitness_populacao();
 }
 
+// Realiza a predação por síntese:
+//  Elimina o pior indivíduo;
+//  Cria um indivíduo com cada gene mais frequente na população inteira.
+void Populacao::realizar_predacao_sintese(){
+    Cronograma novo_individuo;
+
+    cout << "--------------------------------------------------------------" << endl;
+    cout << "Fitness do pior antes da predação: " << individuos[pior].get_fitness() << endl;
+
+    for(int aula = 0; aula < N_AULAS; aula++){
+        int comparador_genes[TAM_POP] = {}; // comparador_genes[i] = 1 => ind[i] tem aula atual igual à de alguém.
+        int maior = 0; // indice do indivíduo com a aula que mais se repete; se tudo diferente, pega o 0.
+        int num_aulas_maior = 0; // número de vezes da aula que mais se repete.
+        for(int ind = 0; ind < TAM_POP; ind++){
+            int num_iguais = 1; // número de vezes que a aula do individuo[ind] se repete na população.
+            
+            if(comparador_genes[ind] == 1) // indivíduo atual já tem aula igual a alguém.
+                continue;
+
+            //cout << "Analisando individuo " << ind << endl;
+
+            // Achamos um indivíduo com uma aula nova
+            comparador_genes[ind] = 1; // aula do ind é igual à dele mesmo.
+            for(int outro_ind = ind+1; outro_ind < TAM_POP; outro_ind++){
+                if(comparador_genes[outro_ind] == 1)
+                    continue;
+
+                if(individuos[outro_ind].get_aula(aula) == individuos[ind].get_aula(aula)){
+                    comparador_genes[outro_ind] = 1;
+                    num_iguais++;
+
+                    //cout << "ind[" << outro_ind << "] tem aula igual a ind[" << ind << "]\n";
+                }
+            }
+
+            if(num_iguais > num_aulas_maior){
+                maior = ind;
+                num_aulas_maior = num_iguais;
+            }
+        }
+        //cout << "indivíduo com mais aulas iguais à dele: " << maior << " num de iguais: " << num_aulas_maior << endl;
+
+        novo_individuo.adicionar_aula(individuos[maior].get_aula(aula));
+    }
+
+    individuos[pior] = novo_individuo;
+    calcular_fitness_populacao();
+    //individuos[pior].imprimir();
+    cout << "Fitness do pior depois da predação: " << individuos[pior].get_fitness() << endl;
+
+    cout << "--------------------------------------------------------------" << endl;
+}
+
 // Inicia o algoritmo evolutivo sobre a população.
 // Usa Torneio para escolher os pais.
 void Populacao::evoluir_populacao(){
@@ -528,7 +582,7 @@ void Populacao::evoluir_populacao(){
 
         // Realização da predação periodicamente.
         if(!(gen % GEN_POR_CICLO_PREDACAO))
-            realizar_predacao();
+            realizar_predacao_sintese();
 
         arquivo_fitness << fitness_melhor << "\n";
      
@@ -563,10 +617,10 @@ void Populacao::evoluir_populacao(){
 
         calcular_fitness_populacao();
 
-        if(individuos[melhor].get_conflitos_duros() == 0){
-            cout << "Melhor não tem conflitos duros. Número de conflitos leves: " 
-                 << individuos[melhor].get_conflitos_leves() << endl;
-        }
+        //if(individuos[melhor].get_conflitos_duros() == 0){
+        //    cout << "Melhor não tem conflitos duros. Número de conflitos leves: " 
+        //         << individuos[melhor].get_conflitos_leves() << endl;
+        //}
 
         if(fitness_melhor == 1.0){ // Um cronograma válido foi gerado.
             arquivo_fitness << fitness_melhor;

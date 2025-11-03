@@ -52,6 +52,30 @@ struct Aula{
     std::string observacao;
 };
 
+// Comparação de aulas.
+//  São iguais se horarios, sala e disciplina forem iguais.
+inline bool operator==(const Aula &a1, const Aula &a2){
+    bool horarios_iguais = false;
+    if(!a1.horario && !a2.horario) // Ambos são nulos
+        horarios_iguais = true;
+    else if(a1.horario && a2.horario) // Ambos não são nulos
+        horarios_iguais = (a1.horario->id == a2.horario->id);
+    
+    bool salas_iguais = false;
+    if(!a1.sala && !a2.sala) // Ambos são nulos
+        salas_iguais = true;
+    else if(a1.sala && a2.sala) // Ambos não são nulos
+        salas_iguais = (a1.sala->id == a2.sala->id);
+
+    bool disciplinas_iguais = false;
+    if(!a1.disciplina && !a2.disciplina) // Ambos são nulos
+        disciplinas_iguais = true;
+    else if(a1.disciplina && a2.disciplina) // Ambos não são nulos
+        disciplinas_iguais = (a1.disciplina->id == a2.disciplina->id);
+
+    return (horarios_iguais && salas_iguais && disciplinas_iguais);
+}
+
 class Cronograma{
 private:
     std::vector<Aula> aulas;
@@ -104,6 +128,8 @@ public:
     void calcular_fitness_populacao();
     // Substitui o pior indivíduo por um novo aleatório, e calcula seu fitness.
     void realizar_predacao();
+    // Realiza predação por síntese.
+    void realizar_predacao_sintese();
     // Retorna o indivíduo i.
     Cronograma get_individuo(size_t i) const;
     // Retorna o índice do melhor indivíduo.
