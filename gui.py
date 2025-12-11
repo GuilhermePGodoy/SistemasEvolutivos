@@ -29,7 +29,7 @@ def carregar_dados_solucao(caminho_arquivo):
 
 def criar_interface():
     """Cria e configura a janela principal com as abas e a grade horária."""
-    fitness, aulas_por_turma = carregar_dados_solucao("pior_solucao.json")
+    fitness, aulas_por_turma = carregar_dados_solucao("melhor_solucao.json")
 
     if not aulas_por_turma:
         return

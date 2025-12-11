@@ -119,7 +119,7 @@
     {"nome": "Teoria da Computação e Linguagens Formais", "id_professor": 17, "id_turma": 7, "aulas semana": 2, "tipo": "teorica"},
     {"nome": "Computadores e Sociedade I", "id_professor": 18, "id_turma": 8, "aulas semana": 1, "tipo": "teorica"},
     {"nome": "Computadores e Sociedade I", "id_professor": 18, "id_turma": 7, "aulas semana": 1, "tipo": "teorica"},
-    {"nome": "Laboratório de Algoritmos Avançados II", "id_professor": 15, "id_turma": 9, "aulas semana": 1, "tipo": "teorica"},
+    {"nome": "Laboratório de Algoritmos Avançados II", "id_professor": 15, "id_turma": 9, "aulas semana": 1, "tipo": "lab"},
     {"nome": "Metodologia de Pesquisa em Computação", "id_professor": 21, "id_turma": 9, "aulas semana": 1, "tipo": "teorica"},
     {"nome": "Algoritmos Avançados e Aplicações", "id_professor": 22, "id_turma": 11, "aulas semana": 1, "tipo": "teorica"},
     {"nome": "Algoritmos Avançados e Aplicações", "id_professor": 22, "id_turma": 10, "aulas semana": 1, "tipo": "teorica"},

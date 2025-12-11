@@ -5,7 +5,7 @@
 #include <memory>
 
 constexpr int TAM_POP = 200;
-constexpr int MAX_GEN = 1000;
+constexpr int MAX_GEN = 10000;
 constexpr int GEN_POR_CICLO_PREDACAO = 10;
 constexpr double TAXA_BASE_MUTACAO = 0.01;
 

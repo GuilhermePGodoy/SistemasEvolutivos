@@ -373,18 +373,21 @@ void Cronograma::calcular_fitness(){
         if(aulas[i].sala->capacidade < aulas[i].disciplina->turma->num_alunos){
             conflitos_duros++;
             tem_conflito++;
+            cout << "CONFLITO DE CAPACIDADE: " << aulas[i].disciplina->nome << endl;
         }
 
         //Relação com o campus no qual a aula foi alocada.
         if(aulas[i].sala->campus != aulas[i].disciplina->campus){
             conflitos_duros++;
             tem_conflito++;
+            cout << "CONFLITO DE CAMPUS: " << aulas[i].disciplina->nome << endl;
         }
 
         // Relação com o tipo da aula.
         if(aulas[i].sala->tipo != aulas[i].disciplina->tipo){
             conflitos_duros++;
             tem_conflito++;
+            cout << "CONFLITO DE TIPO (LAB/TEÓRICA): " << aulas[i].disciplina->nome << endl;
         }
 
         for(size_t j = i+1; j < aulas.size(); j++){
@@ -397,18 +400,24 @@ void Cronograma::calcular_fitness(){
             if(aulas[i].disciplina->professor->id == aulas[j].disciplina->professor->id){
                 conflitos_duros++;
                 tem_conflito++;
+                cout << "CONFLITO DE HORÁRIO DE PROFESSOR: "  << aulas[i].disciplina->nome <<
+                                                           " e " << aulas[j].disciplina->nome << endl;
             }
 
             // Mesma turma tendo duas aulas ao mesmo tempo.
             if(aulas[i].disciplina->turma->id == aulas[j].disciplina->turma->id){
                 conflitos_duros++;
                 tem_conflito++;
+                cout << "CONFLITO DE HORÁRIO DE TURMA: " << aulas[i].disciplina->nome <<
+                                                           " e " << aulas[j].disciplina->nome << endl;
             }
 
             // Mesma sala sendo usada para duas aulas ao mesmo tempo.
             if(aulas[i].sala->id == aulas[j].sala->id){
                 conflitos_duros++;
                 tem_conflito++;
+                cout << "CONFLITO DE SALA: " << aulas[i].disciplina->nome <<
+                                                           " e " << aulas[j].disciplina->nome << endl;
             }
 
             // SOFT CONSTRAINTS
@@ -772,7 +781,7 @@ void Populacao::evoluir_populacao(){
                 << individuos[melhor].get_conflitos_leves() << endl;
         }
 
-        if(fitness_melhor == 1.0){ // Um cronograma válido foi gerado.
+        if(fitness_melhor == 1.0){ // Um cronograma sem conflitos foi gerado.
             arquivo_fitness << fitness_melhor;
             break;
         }
