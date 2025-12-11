@@ -345,9 +345,6 @@ Cronograma::Cronograma(const vector<shared_ptr<Disciplina>>& disciplinas){
         }
     }
 
-    cout << "CRIANDO CRONOGRAMA\n";
-    cout << "n aulas = " << aulas.size() << endl;
-
     // cout << "Cronograma inicializado com sucesso." << endl;
     // cout << "----------------------------------" << endl;
 }
@@ -436,6 +433,9 @@ void Cronograma::calcular_fitness(){
                                   : aulas[i].observacao + ", " + to_string(j) + "(" + to_string(tem_conflito) + ")";
         }
     }
+    cout << "Número de conflitos leves: " << conflitos_leves << endl;
+    cout << "Número de conflitos duros: " << conflitos_duros << endl;
+
     penalidade = conflitos_leves*PESO_CONFLITOS_LEVES + conflitos_duros*PESO_CONFLITOS_DUROS;
     fitness = funcao_fitness(penalidade);
 
@@ -542,10 +542,10 @@ void Populacao::salvar_solucao_em_json(const string& nome_arquivo, size_t ind) c
     for (size_t i = 0; i < N_AULAS; ++i) {
         const Aula& aula = melhor_cronograma.get_aula(i);
         json aula_json;
-        aula_json["disciplina"] = "Disc " + std::to_string(aula.disciplina->id);
+        aula_json["disciplina"] =  aula.disciplina->nome;
         aula_json["professor"] = aula.disciplina->professor->nome;
         aula_json["turma"] = aula.disciplina->turma->turma;
-        aula_json["sala"] = aula.sala->id;
+        aula_json["sala"] = aula.sala->numero;
         aula_json["horario"] = aula.horario->horario;
         aula_json["tem_conflito"] = tem_conflito[i]; // Adiciona a flag de conflito
         json_output["aulas"].push_back(aula_json);
@@ -807,6 +807,10 @@ int simulacao(){
     populacao.salvar_solucao_em_json("melhor_solucao.json", populacao.get_melhor());
     // Salva o pior em outro arquivo para ver os conflitos.
     populacao.salvar_solucao_em_json("pior_solucao.json", populacao.get_pior());
+
+    cout << "Calculando fitness do melhor encontrado:\n";
+
+    populacao.get_individuo(populacao.get_melhor()).calcular_fitness();
 
     return populacao.get_gen();
 }

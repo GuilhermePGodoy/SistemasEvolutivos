@@ -29,7 +29,7 @@ def carregar_dados_solucao(caminho_arquivo):
 
 def criar_interface():
     """Cria e configura a janela principal com as abas e a grade horária."""
-    fitness, aulas_por_turma = carregar_dados_solucao("melhor_solucao.json")
+    fitness, aulas_por_turma = carregar_dados_solucao("pior_solucao.json")
 
     if not aulas_por_turma:
         return
@@ -48,7 +48,7 @@ def criar_interface():
         "08:10": 0, "10:10": 1, "14:20": 2, "16:20": 3
     }
     mapa_dias = {
-        "segunda-feira": 0, "terça-feira": 1, "quarta-feira": 2, "quinta-feira": 3, "sexta-feira": 4
+        "SEG": 0, "TER": 1, "QUA": 2, "QUI": 3, "SEX": 4
     }
 
     # --- Loop para Criar uma Aba para Cada Turma ---
@@ -77,7 +77,7 @@ def criar_interface():
         # --- Preenche a Grade com as Aulas ---
         for aula in aulas:
             try:
-                # Extrai o dia e a hora da string de horário (ex: "SEG_08:10")
+                # Extrai o dia e a hora da string de horário (ex: "SEG 08:10")
                 dia_str, hora_str = aula["horario"].split(' ')
                 
                 row = mapa_horarios.get(hora_str)
