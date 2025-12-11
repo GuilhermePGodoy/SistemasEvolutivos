@@ -48,62 +48,62 @@ vector<string> horarios_possiveis = {"08:10", "10:10", "14:20", "16:20"};
 // =============== INICIALIZAÇÃO DOS DADOS ===============
 
 // Cria dados de teste.
-void inicializar_dados_de_teste() {
-    // std::cout << "Inicializando dados de teste..." << std::endl;
+// void inicializar_dados_de_teste() {
+//     // std::cout << "Inicializando dados de teste..." << std::endl;
 
-    // Garante que os vetores estão vazios antes de começar
-    salas.clear();
-    horarios.clear();
-    professores.clear();
-    turmas.clear();
-    disciplinas.clear();
+//     // Garante que os vetores estão vazios antes de começar
+//     salas.clear();
+//     horarios.clear();
+//     professores.clear();
+//     turmas.clear();
+//     disciplinas.clear();
     
-    // --- Cria Salas ---
-    for (int i = 0; i < N_SALAS; ++i) {
-        // Gera um nome "Sala 101", "Sala 102", etc.
-        string numero_sala = "Sala " + to_string(101 + i);
+//     // --- Cria Salas ---
+//     for (int i = 0; i < N_SALAS; ++i) {
+//         // Gera um nome "Sala 101", "Sala 102", etc.
+//         string numero_sala = "Sala " + to_string(101 + i);
 
-        // Capacidade varia de 20 a 70
-        int capacidade = 20 + (i * 5); 
-        salas.push_back(std::make_shared<Sala>(Sala{i, numero_sala, capacidade}));
-    }
+//         // Capacidade varia de 20 a 70
+//         int capacidade = 20 + (i * 5); 
+//         salas.push_back(std::make_shared<Sala>(Sala{i, numero_sala, capacidade}));
+//     }
 
-    // --- Cria Horarios ---
-    int id = 0;
-    for (auto dia : dias)
-        for (auto horario : horarios_possiveis) {
-            // cout << "id horario " << id << endl;
-            std::string descricao_horario = dia + horario;
-            horarios.push_back(std::make_shared<Horario>(Horario{id, descricao_horario}));
-            id++;
-    }
+//     // --- Cria Horarios ---
+//     int id = 0;
+//     for (auto dia : dias)
+//         for (auto horario : horarios_possiveis) {
+//             // cout << "id horario " << id << endl;
+//             std::string descricao_horario = dia + horario;
+//             horarios.push_back(std::make_shared<Horario>(Horario{id, descricao_horario}));
+//             id++;
+//     }
 
-    // --- Cria Professores ---
-    for (int i = 0; i < N_PROFESSORES; ++i) {
-        std::string nome_professor = "Prof. " + std::to_string(i + 1);
-        professores.push_back(std::make_shared<Professor>(Professor{i, nome_professor}));
-    }
+//     // --- Cria Professores ---
+//     for (int i = 0; i < N_PROFESSORES; ++i) {
+//         std::string nome_professor = "Prof. " + std::to_string(i + 1);
+//         professores.push_back(std::make_shared<Professor>(Professor{i, nome_professor}));
+//     }
 
-    // --- Cria Turmas ---
-    for (int i = 0; i < N_TURMAS; ++i) {
-        std::string nome_turma = "Turma " + std::to_string(i + 1);
-        int num_alunos = 20 + i;
-        turmas.push_back(std::make_shared<Turma>(Turma{i, num_alunos, nome_turma}));
-    }
+//     // --- Cria Turmas ---
+//     for (int i = 0; i < N_TURMAS; ++i) {
+//         std::string nome_turma = "Turma " + std::to_string(i + 1);
+//         int num_alunos = 20 + i;
+//         turmas.push_back(std::make_shared<Turma>(Turma{i, num_alunos, nome_turma}));
+//     }
 
-    // --- Cria Disciplinas e as associa a Professores e Turmas ---
-    for (int i = 0; i < N_DISCIPLINAS; ++i) {
-        // Associa a disciplina 'i' ao professor 'i' e à turma 'i' (exemplo simples)
-        // O operador % garante que o índice nunca saia dos limites do vetor.
-        auto professor_associado = professores[aleatorio(65000) % professores.size()];
-        auto turma_associada = turmas[aleatorio(65000) % turmas.size()];
+//     // --- Cria Disciplinas e as associa a Professores e Turmas ---
+//     for (int i = 0; i < N_DISCIPLINAS; ++i) {
+//         // Associa a disciplina 'i' ao professor 'i' e à turma 'i' (exemplo simples)
+//         // O operador % garante que o índice nunca saia dos limites do vetor.
+//         auto professor_associado = professores[aleatorio(65000) % professores.size()];
+//         auto turma_associada = turmas[aleatorio(65000) % turmas.size()];
 
-        disciplinas.push_back(std::make_shared<Disciplina>(Disciplina{i, professor_associado, turma_associada}));
-    }
+//         disciplinas.push_back(std::make_shared<Disciplina>(Disciplina{i, professor_associado, turma_associada}));
+//     }
 
-    // std::cout << "Dados inicializados com sucesso." << std::endl;
-    // std::cout << "----------------------------------" << std::endl;
-}
+//     // std::cout << "Dados inicializados com sucesso." << std::endl;
+//     // std::cout << "----------------------------------" << std::endl;
+// }
 
 void ler_arquivo_entrada(const string& nome_arquivo){
     ifstream f(nome_arquivo);
@@ -136,7 +136,7 @@ void ler_arquivo_entrada(const string& nome_arquivo){
         id++;
     }
 
-    int id = 1;
+    id = 1;
     for(const auto& horario : dados["horarios"]){
         auto ptr = make_shared<Horario>(Horario{
             id,
@@ -151,7 +151,7 @@ void ler_arquivo_entrada(const string& nome_arquivo){
             professor["id"].get<int>(),
             professor["nome"].get<string>()
         });
-        professor.push_back(ptr);
+        professores.push_back(ptr);
 
         mapa_professores[professor["id"].get<int>()] = ptr;
     }
@@ -162,12 +162,31 @@ void ler_arquivo_entrada(const string& nome_arquivo){
             turma["turma"].get<string>(),
             turma["numero alunos"].get<int>(),
         });
-        turma.push_back(ptr);
+        turmas.push_back(ptr);
 
         mapa_turmas[turma["id"].get<int>()] = ptr;
     }
 
-    TODO: ler as disciplinas no arquivo.
+    id = 1;
+    for(const auto& disciplina : dados["disciplinas"]){
+
+            // cout << "1 " << disciplina["nome"].get<string>() << endl;
+            // cout << "2 " << mapa_professores[disciplina["id_professor"].get<int>()] << endl;
+            // cout << "3 " << mapa_turmas[disciplina["id_turma"].get<int>()] << endl;
+            // cout << "4 " << disciplina["aulas semana"].get<int>() << endl;
+            // cout << "5 " << disciplina["tipo"].get<string>() << endl;
+
+        auto ptr = make_shared<Disciplina>(Disciplina{
+            id,
+            disciplina["nome"].get<string>(),
+            mapa_professores[disciplina["id_professor"].get<int>()],
+            mapa_turmas[disciplina["id_turma"].get<int>()],
+            disciplina["aulas semana"].get<int>(),
+            disciplina["tipo"].get<string>(),
+            1 // campus. Aqui não estamos considerando disciplinas no campus 2.
+        });
+        id++;
+    }
 }
 
 // ==================================================
@@ -282,9 +301,8 @@ Cronograma::Cronograma(const vector<shared_ptr<Disciplina>>& disciplinas){
     // cout << "Inicializando cronograma aleatoriamente." << endl;
     conflitos_leves = conflitos_duros = 0;
 
-    int i;
     for(auto disciplina : disciplinas){
-        for(int i = 0; i < disciplina.num_aulas_semana; i++){
+        for(int i = 0; i < disciplina->num_aulas_semana; i++){
             Aula aula;
             i = aleatorio(N_HORARIOS);
             aula.horario = horarios[i];
@@ -367,14 +385,13 @@ void Cronograma::calcular_fitness(){
         }
         
         // SOFT CONSTRAINT
-        // Aulas em salas distantes entre si preferencialmente não são consecutivas.
+        // Aulas em campi diferentes preferencialmente não são consecutivas.
         if((aulas[i].disciplina->professor->id == aulas[j].disciplina->professor->id
                 || aulas[i].disciplina->turma->id == aulas[j].disciplina->turma->id) &&
-            (aulas[i].horario->id == aulas[j].horario->id + 1 // ATENÇÃO: 10:10 NÃO É CONSECUTIVA A 14:20
-                || aulas[j].horario->id == aulas[i].horario->id + 1)){
+            ((aulas[j].horario->id % 2 == 1 && aulas[i].horario->id == aulas[j].horario->id + 1)
+                || (aulas[i].horario->id % 2 == 1 && aulas[j].horario->id == aulas[i].horario->id + 1))){
             
-            if((aulas[i].sala->id < N_SALAS/2 && aulas[j].sala->id >= N_SALAS/2)
-                || (aulas[i].sala->id >= N_SALAS/2 && aulas[j].sala->id < N_SALAS/2)){
+            if((aulas[i].disciplina->campus != aulas[i].disciplina->campus)){
                 conflitos_leves++;
             }
         }
@@ -436,7 +453,7 @@ void Cronograma::imprimir(void) const {
         // Checagens de segurança para garantir que os ponteiros não são nulos
         std::string nome_disciplina = aula.disciplina ? std::to_string(aula.disciplina->id) : "N/A";
         std::string nome_professor = (aula.disciplina && aula.disciplina->professor) ? aula.disciplina->professor->nome : "N/A";
-        std::string nome_turma = (aula.disciplina && aula.disciplina->turma) ? aula.disciplina->turma->nome : "N/A";
+        std::string nome_turma = (aula.disciplina && aula.disciplina->turma) ? aula.disciplina->turma->turma : "N/A";
         std::string numero_sala = aula.sala ? aula.sala->numero : "N/A";
         std::string horario_desc = aula.horario ? aula.horario->horario : "N/A";
         std::string aula_observacao = aula.observacao;
@@ -493,7 +510,7 @@ void Populacao::salvar_solucao_em_json(const string& nome_arquivo, size_t ind) c
         json aula_json;
         aula_json["disciplina"] = "Disc " + std::to_string(aula.disciplina->id);
         aula_json["professor"] = aula.disciplina->professor->nome;
-        aula_json["turma"] = aula.disciplina->turma->nome;
+        aula_json["turma"] = aula.disciplina->turma->turma;
         aula_json["sala"] = aula.sala->id;
         aula_json["horario"] = aula.horario->horario;
         aula_json["tem_conflito"] = tem_conflito[i]; // Adiciona a flag de conflito
@@ -738,7 +755,9 @@ int simulacao(){
 }
 
 int main(void){
-    inicializar_dados_de_teste(); // Modifica variáveis globais; tem que estar fora da região paralela.
+    //inicializar_dados_de_teste(); // Modifica variáveis globais; tem que estar fora da região paralela.
+
+    ler_arquivo_entrada("dadosICMC.json");
 
     // SIMULAÇÃO PARALELA
     // Cria 8 threads que evoluirão populações independentemente.
