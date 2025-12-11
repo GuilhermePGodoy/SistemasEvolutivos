@@ -5,16 +5,8 @@
 #include <memory>
 
 constexpr int TAM_POP = 200;
-constexpr int N_AULAS = 64;
 constexpr int MAX_GEN = 1000;
-
-constexpr int N_SALAS = 20;
-constexpr int N_HORARIOS = 20;
-constexpr int N_PROFESSORES = 20;
-constexpr int N_TURMAS = 30;
-constexpr int N_DISCIPLINAS = 64;
 constexpr int GEN_POR_CICLO_PREDACAO = 10;
-
 constexpr double TAXA_BASE_MUTACAO = 0.01;
 
 struct Sala{
